@@ -1,0 +1,495 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+library(dplyr)
+```
+# Project 1
+
+Loading the file
+```{r}
+female <- read.csv("female.csv")
+```
+
+
+```{r}
+# Determine whether the female dataset is a data frame
+is.data.frame(female)
+```
+```{r}
+# printing the first few rows of the data frame
+head(female)
+```
+
+```{r}
+# selecting rows we want to use in our analysis
+female <- female %>%
+filter(Country.Name == "Brazil" | Country.Name == "India" | Country.Name == "United States")
+
+```
+```{r}
+# we remove the null and unnecessary columns and then rename the columns
+female <- female[ -c(1,2,4,5:8,10:11,13:15)] %>%
+  rename("2014" = 2, "2017" = 3, "2021" = 4)
+
+head(female)
+```
+```{r}
+# we flip the rows and columns of the dataframe (transpose) and remove the first column
+transpose_f <- data.frame(t(female[-1]))
+# Assign new columns from  the first column of the original df
+colnames(transpose_f) <- female[, 1]
+
+head(transpose_f)
+```
+```{r}
+#
+# return a class of each column using the supply function that takes a list, vector, and return a vector of the results.
+print(sapply(transpose_f, class))
+```
+```{r}
+# turn the entries to numeric
+
+transpose_f$Brazil = as.numeric(as.character(transpose_f$Brazil))
+transpose_f$India = as.numeric(as.character(transpose_f$India))
+transpose_f$"United States" = as.numeric(as.character((transpose_f$"United States")))
+
+head(transpose_f)
+```
+```{r}
+# summarize each column with mean
+summarise_each(transpose_f, list(mean))
+```
+
+```{r}
+# Plot the change in ownership percentage overtime for the data from India 
+year <- c(2014, 2017, 2021)
+
+ggplot(data=transpose_f, aes(x=year, y=India, group=1)) +
+  geom_line() +
+  geom_point()
+```
+Merging two datasets together .
+```{r}
+male <- read.csv(file = "male.csv")
+male <- male %>%
+  filter(Country.Name == "Brazil" | Country.Name == "India" | Country.Name == "United States")
+
+male <- male[ -c(1,2,4,5:8,10:11,13:15)] %>%
+  rename("2014" = 2, "2017" = 3, "2021" = 4)
+
+transpose_m <- data.frame(t(male[-1]))
+colnames(transpose_m) <- male[, 1]
+
+transpose_m$Brazil = as.numeric(as.character(transpose_m$Brazil))
+transpose_m$India = as.numeric(as.character(transpose_m$India))
+transpose_m$"United States" = as.numeric(as.character((transpose_m$"United States")))
+
+
+head(transpose_m)
+```
+
+```{r}
+transpose_m <- rename(transpose_m, "Brazil_m" = 1, "India_m" = 2, "United_States_m" = 3)
+
+
+head(transpose_m)
+```
+
+```{r}
+# we add ne columns to the dataframes
+transpose_m <- rownames_to_column(transpose_m, var="Year")
+transpose_f <- rownames_to_column(transpose_f, var="Year")
+```
+
+```{r}
+# Merge the two dataframes based on the year column
+acct_owner_by_gender <- merge(x = transpose_m, y = transpose_f, by = "Year", all.x = TRUE)
+
+acct_owner_by_gender <- rename(acct_owner_by_gender, "United_States" = 7)
+
+head(acct_owner_by_gender)
+```
+```{r}
+# Visualize the two dataframes
+
+gfg_plot <- ggplot(acct_owner_by_gender, aes(x=year)) +
+geom_line(aes(y = India), color = "black") +
+geom_line(aes(y = India_m), color = "red") +
+geom_line(aes(y = Brazil), color = "green") +
+geom_line(aes(y = Brazil_m), color = "blue") +
+geom_line(aes(y = United_States), color = "purple") +
+geom_line(aes(y = United_States_m), color = "violet")
+
+gfg_plot
+```
+ **Project 1**
+i) (Cleaning up the final plot) The final plot is somewhat misleading: the y-axis is titled “India”. Write
+down the code that will change it to percentage ownership
+ 
+```{r}
+gfg_plot <- ggplot(acct_owner_by_gender, aes(x=year)) +
+geom_line(aes(y = India), color = "black") +
+geom_line(aes(y = India_m), color = "red") +
+geom_line(aes(y = Brazil), color = "green") +
+geom_line(aes(y = Brazil_m), color = "blue") +
+geom_line(aes(y = United_States), color = "purple") +
+geom_line(aes(y = United_States_m), color = "violet") +
+ylab("percentage ownership")
+gfg_plot
+```
+ ii). (Drawing Conclusions) After drawing the plot that includes how percentages change over time,
+use this to draw some conclusions on the how the ownership percentages have been changed. For
+example, you can discuss whether males have more account ownership than females and whether
+the data suggests that account ownership percentages are on the rise
+Conclusions.
+
+-The percentage ownership for males in India was higher than the percentage ownership for females for the year 2014 to 2020 but percentage was the same in the year 2021.
+-The percentage ownership for males in Brazil was higher than the percentage ownership for females throughout the years 2014 - 2020
+-The percentage ownership for males was constant throught the years in United States while the percentage ownership for females was high from 2014 to 2016 declined from 2016 to 2018 then was higher as from 2018.
+-Generally the average percentage ownership for both males and females in United states was higher than those in India and Brazil.
+
+iii)
+(Cherry Picking) Is it possible to say that account percentages have been increasing if you disregard
+a certain year? Does this change if you focus on a particular country and gender combinations?
+
+-Generally the account percentages has been increasing over the years.
+
+(Summarizing the data yourself) Do a similar analysis using the csv files:
+
+a) Primary data
+```{r}
+primary <- read.csv("primary.csv")
+head(primary)
+```
+
+```{r}
+is.data.frame(primary)
+```
+```{r}
+primary <- primary %>%
+  filter(Country.Name == "China" | Country.Name == "Israel" | Country.Name == "Nigeria" | Country.Name == "France" | Country.Name == "Algeria")
+```
+
+```{r}
+head(primary)
+```
+
+```{r}
+# Drop unnecessary columns
+primary <- primary[ -c(1,2,4,5:8,10:11,13:15)] %>%
+  rename("2014" = 2, "2017" = 3, "2021" = 4)
+
+head(primary)
+```
+
+
+```{r}
+transpose_p <- data.frame(t(primary[-1]))
+colnames(transpose_p) <- primary[, 1]
+
+head(transpose_p)
+```
+
+```{r}
+print(sapply(transpose_p, class))
+```
+
+
+```{r}
+# converting the character values to numeric
+transpose_p$Algeria = as.numeric(as.character(transpose_p$Algeria))
+transpose_p$China = as.numeric(as.character(transpose_p$China))
+transpose_p$Nigeria = as.numeric(as.character(transpose_p$Nigeria))
+transpose_p$France = as.numeric(as.character(transpose_p$France))
+transpose_p$Israel = as.numeric(as.character(transpose_p$Israel))
+
+
+head(transpose_p)
+```
+```{r}
+#Summary of each category
+summarise_each(transpose_p, list(mean))
+```
+
+```{r}
+year <- c(2014, 2017, 2021)
+
+ggplot(data = transpose_p, aes(x=year, y=China, group = 1)) +
+  geom_line() +
+  geom_point()
+
+```
+Merging the two datasets together
+
+```{r}
+secondary <- read.csv(file = "secondary.csv")
+
+secondary <- secondary %>%
+  filter(Country.Name == "China" | Country.Name == "Israel" | Country.Name == "Nigeria" | Country.Name == "France" | Country.Name == "Algeria")
+
+secondary <- secondary[ -c(1,2,4,5:8,10:11,13:15)] %>%
+rename("2014" = 2, "2017" = 3, "2021" = 4)
+
+
+transpose_s <- data.frame(t(secondary[-1]))
+colnames(transpose_s) <- secondary[, 1]
+
+# converting the character values to numeric
+transpose_s$Algeria = as.numeric(as.character(transpose_s$Algeria))
+transpose_s$China = as.numeric(as.character(transpose_s$China))
+transpose_s$Nigeria = as.numeric(as.character(transpose_s$Nigeria))
+transpose_s$France = as.numeric(as.character(transpose_s$France))
+transpose_s$Israel = as.numeric(as.character(transpose_s$Israel))
+
+```
+```{r}
+head(transpose_s)
+```
+
+```{r}
+transpose_s <- rename(transpose_s, "Algeria_s" = 1, "China_s" = 2, "France_s" = 3, "Israel_s" = 4, "Nigeria_s" = 5)
+
+head(transpose_s)
+```
+
+```{r}
+transpose_p <- rownames_to_column(transpose_p, var="Year")
+transpose_s <- rownames_to_column(transpose_s, var="Year")
+```
+
+```{r}
+acct_owner_by_lev_educ <- merge(x = transpose_s, y=transpose_p, by ="Year", all.x = TRUE)
+
+head(acct_owner_by_lev_educ)
+```
+
+```{r}
+
+gfg_plot <- ggplot(acct_owner_by_lev_educ, aes(x=year)) +
+geom_line(aes(y = Nigeria), color = "black") +
+geom_line(aes(y = Nigeria_s), color = "red") +
+geom_line(aes(y = China), color = "green") +
+geom_line(aes(y = China_s), color = "blue") +
+geom_line(aes(y = France), color = "purple") +
+geom_line(aes(y = France_s), color = "violet")+
+geom_line(aes(y = Algeria), color = "yellow") +
+geom_line(aes(y = Algeria_s), color = "brown") +
+geom_line(aes(y = Israel), color = "pink")+
+geom_line(aes(y = Israel_s), color = "gray")+
+  ylab("Percentage Ownership")
+
+gfg_plot
+```
+Conclusions.
+-Generally the percentage ownership of students in secondary is higher than the percentage ownership of students in primary.
+- The percentage ownership for Secondary students in France is higher the percentage ownership in other countries.
+-The percentage ownership for primary students in Nigeria was the lowest compared to other countries.
+
+
+
+
+Project Two
+
+```{r}
+set.seed(1)
+coin_flips <- rbinom(100, 1, .5)
+coin_flips
+```
+
+
+```{r}
+Data <- data.frame(toss_number = (1:length(coin_flips)), toss_result = coin_flips)
+
+head(Data, 5)
+
+```
+```{r}
+
+frequencies <- function(vec){
+  len_vec <- length(vec)
+  
+  avg <- 1:len_vec
+  
+  for (i in 1:len_vec){
+    avg[i] <- length(which(vec[1:i] == 1)) / i
+  }
+  return(avg)
+}
+
+freq <- frequencies(coin_flips)
+Data$avgs <- freq
+head(Data, 5)
+
+```
+```{r}
+estimate_pi <- function(seed =1, iterations = 10000) {
+  set.seed(seed)
+  
+  x <- runif(n = iterations, min = 0, max = 1)
+  
+  val_of_g = sqrt(1-x^2)
+  
+  pi_over_four = mean(val_of_g)
+  
+  pi <- 4 *pi_over_four
+  
+  return(pi)
+  
+}
+
+```
+
+```{r}
+estimate_pi()
+```
+#  Project 2:
+1. Consider an experiment where you toss a a fair coin 12 times. Let X be the number of heads that you obtain. Note that X ∼ Bin(12, 1/2).
+(a) Compute P(X = 7) (using the formulas associated with the binomial distributions. R
+can compute the theoretical value as well if you choose to go that route)
+
+
+```{r}
+set.seed(23)
+coin <- dbinom(7, 12, 0.5)
+
+coin
+```
+(b) Plot the evolution of the relative frequency for X = 7 based on 1000000 repetitions of
+the above.
+
+```{r}
+set.seed(23)
+num_reps <- 1000000
+X_7 <- rep(NA, num_reps)
+
+for(i in 1:num_reps) {
+  coin_flips <- rbinom(12, 1, 0.5)
+  X_7[i] <- sum(coin_flips == 1)
+}
+
+rel_freqs <- cumsum(X_7 == 7) / seq_along(X_7)
+
+ggplot(data = data.frame(trial = 1:num_reps, relative_frequency = rel_freqs), aes(x = trial, y = relative_frequency)) +
+  geom_line() +
+  labs(x = "Trial", y = "Relative Frequency")
+
+```
+c) Explain how your observations match up with the frequentist interpretation of probability.
+
+The frequentist interpretation of probability states that the probability of an event is the limit of the relative frequency of that event as the number of repetitions of the experiment approaches infinity. In our case, as we increase the number of repetitions of the experiment (i.e., the number of times we toss the coin 12 times), we observe that the relative frequency of obtaining 7 heads approaches the theoretical probability of P(X = 7). This is consistent with the frequentist interpretation of probability.
+
+d) Compute E(X) and the observed average of the repetitions
+
+The expected value of X is given by E(X) = np = 12 * 0.5 = 6
+
+```{r}
+mean(X_7)
+
+```
+
+e) Do your observations match up with the law of large numbers?
+
+The law of large numbers states that as the number of repetitions of an experiment increases, the sample mean approaches the true mean of the population. In our case, as we increase the number of repetitions of the experiment, we observe that the observed average of the repetitions approaches the expected value of X, which is consistent with the law of large numbers.
+
+2. Experimentally verify the law of large numbers for the standard normal distribution and an exponential distribution with λ = 4
+
+For the standard normal distribution, the law of large numbers states that the sample mean of a large number of independent and identically distributed normal random variables will converge to the population mean. Similarly, for an exponential distribution with parameter λ, the sample mean will converge to the population mean 1/λ
+
+For the standard distribution
+```{r}
+set.seed(1)
+n <- c(10, 100, 1000, 10000, 100000)
+
+for (i in n) {
+  x <- rnorm(i)
+  print(mean(x))
+}
+
+```
+
+For the Exponential Distribution
+```{r}
+set.seed(1)
+n <- c(10, 100, 1000, 10000, 100000)
+
+for (i in n) {
+  x <- rexp(i, rate = 4)
+  print(mean(x))
+}
+
+```
+
+3. (Simulating the lottery) Modify the above code to display the frequencies (or the relative frequencies) of the sums. Summarize your observations.
+
+```{r}
+library('tidyverse')
+
+# Function that mimics the lottery and graphs
+lottery <- function(seed = 1, iterations = 15000) {
+  # Set seed for reproducibility
+  set.seed(seed)
+  
+  # Generate n sets of ticket numbers where a ticket number is a set of three
+  # integers between 1 and 4 inclusive
+  num1 <- floor(runif(n = iterations, min = 1, max = 4))
+  num2 <- floor(runif(n = iterations, min = 1, max = 4))
+  num3 <- floor(runif(n = iterations, min = 1, max = 4))
+  
+  # Calculate sum of each ticket
+  sum <- num1 + num2 + num3
+  
+  # Create dataframe with ticket numbers in order to make easier to graph
+  ticket <- 100*num1 + 10*num2 + num3
+  ticket <- as.data.frame(ticket)
+  
+  # Count occurrences of each ticket number
+  df_ticket <- ticket %>%
+    group_by(ticket) %>%
+    summarise(counts = n())
+  
+  # Count occurrences of each sum
+  df_sum <- data.frame(sum)
+  df_sum$counts <- 1
+  df_sum <- df_sum %>%
+    group_by(sum) %>%
+    summarise(counts = n())
+  
+  # Graphs occurrences of each ticket number
+  df_ticket$ticket <- as.factor(df_ticket$ticket)
+  p1 <- ggplot(df_ticket, aes(x = ticket, y = counts)) +
+    geom_bar(fill = "#0073C2FF", stat='identity') +
+    theme_bw() +
+    labs(title = "Occurrences of each ticket number",
+         x = "Ticket number",
+         y = "Counts")
+  
+  # Graphs occurrences of each sum
+  p2 <- ggplot(df_sum, aes(x = sum, y = counts)) +
+    geom_bar(fill = "#F8766D", stat='identity') +
+    theme_bw() +
+    labs(title = "Occurrences of each sum",
+         x = "Sum",
+         y = "Counts")
+  
+  print(p1)
+  print(p2)
+  
+  return(list(df_ticket, df_sum))
+}
+
+lottery()
+
+
+```
+
+
+
